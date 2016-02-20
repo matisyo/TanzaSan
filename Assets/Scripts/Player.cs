@@ -8,6 +8,7 @@ public class Player : MonoBehaviour {
 
     private bool facingRight;
     private bool attack;
+    private bool slide;
     private bool jump;
     public bool onGround;
     public Vector2 jumpForce;
@@ -18,6 +19,7 @@ public class Player : MonoBehaviour {
 	void Start () {
         facingRight = false;
         attack = false;
+        slide = false;
         myRigidBody = GetComponent<Rigidbody2D>();
         myAnimator = GetComponent<Animator>();
 	}
@@ -28,6 +30,7 @@ public class Player : MonoBehaviour {
         float vertical = Input.GetAxis("Vertical");
         HandleInput();
         HandleMovement(horizontal,vertical);
+        HandleSlide();
         HandleAttacks();
         flip(horizontal);
         resetValues();
@@ -55,6 +58,10 @@ public class Player : MonoBehaviour {
         {
             attack = true;
         }
+        if (Input.GetMouseButtonDown(1))
+        {
+            slide = true;
+        }
         if (Input.GetKeyDown(KeyCode.W))
         {
             if(onGround)
@@ -67,7 +74,7 @@ public class Player : MonoBehaviour {
     
     private void HandleMovement(float horizontal,float vertical)
     {
-        if (!this.myAnimator.GetCurrentAnimatorStateInfo(0).IsTag("attack"))
+        if (!myAnimator.GetBool("slide") && !this.myAnimator.GetCurrentAnimatorStateInfo(0).IsTag("attack"))
         {
             myRigidBody.velocity = new Vector2(horizontal * movementSpeed, myRigidBody.velocity.y); //x = -1 y = 0
             
@@ -80,8 +87,32 @@ public class Player : MonoBehaviour {
                 
             }
         }
-       
-        myAnimator.SetFloat("speed",Mathf.Abs(horizontal));
+
+
+
+            myAnimator.SetFloat("speed",Mathf.Abs(horizontal));
+    }
+
+    private void HandleSlide()
+    {
+        if (slide && !this.myAnimator.GetCurrentAnimatorStateInfo(0).IsTag("slide"))
+        {
+            myAnimator.SetBool("slide", true);
+            
+        }
+        else if (!this.myAnimator.GetCurrentAnimatorStateInfo(0).IsTag("slide"))
+        {
+            myAnimator.SetBool("slide", false);
+        }
+
+
+        if (this.myAnimator.GetCurrentAnimatorStateInfo(0).IsTag("slide"))
+        {
+            float aux = -3;
+            if (facingRight)
+                aux = 3;
+            myRigidBody.velocity = new Vector2(aux * movementSpeed, myRigidBody.velocity.y);
+        }
     }
 
     private void HandleAttacks()
@@ -93,9 +124,11 @@ public class Player : MonoBehaviour {
         }
     }
 
+
+
     private void flip(float horizontal)
     {
-        if (!this.myAnimator.GetCurrentAnimatorStateInfo(0).IsTag("attack"))
+        if (!(this.myAnimator.GetCurrentAnimatorStateInfo(0).IsTag("attack") && !this.myAnimator.GetCurrentAnimatorStateInfo(0).IsTag("slide")))
             if (horizontal > 0 && !facingRight || horizontal<0 && facingRight)
             {
                 facingRight = !facingRight;
@@ -107,6 +140,7 @@ public class Player : MonoBehaviour {
 
     private void resetValues()
     {
+        slide = false;
         attack = false;
     }
 }
